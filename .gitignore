@@ -1,0 +1,5 @@
+*
+!/.gitignore
+!/backend/
+!/backend/user-management/
+!/backend/user-management/**
