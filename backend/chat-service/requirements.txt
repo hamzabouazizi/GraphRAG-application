@@ -1,0 +1,8 @@
+python-dotenv==1.1.1
+fastapi
+uvicorn
+python-dotenv
+openai
+neo4j
+requests
+numpy

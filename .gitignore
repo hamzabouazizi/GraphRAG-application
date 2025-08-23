@@ -1,5 +1,5 @@
 *
 !/.gitignore
 !/backend/
-!/backend/pdf-graphrag-service/
-!/backend/pdf-graphrag-service/**
+!/backend/chat-service/
+!/backend/chat-service/**
