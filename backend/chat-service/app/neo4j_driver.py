@@ -1,4 +1,3 @@
-# neo4j_driver.py
 import os
 from dotenv import load_dotenv
 from neo4j import AsyncGraphDatabase
