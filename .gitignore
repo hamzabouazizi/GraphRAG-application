@@ -1,5 +1,5 @@
 *
 !/.gitignore
 !/backend/
-!/backend/user-management/
-!/backend/user-management/**
+!/backend/pdf-graphrag-service/
+!/backend/pdf-graphrag-service/**
