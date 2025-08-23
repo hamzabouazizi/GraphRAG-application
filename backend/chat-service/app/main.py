@@ -24,7 +24,6 @@ app.add_middleware(
 )
 
 app.include_router(chat_router, prefix="/chat")
-app.include_router(forgot_password_router)
 
 
 # basic health check endpoint
