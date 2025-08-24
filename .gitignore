@@ -1,5 +1,4 @@
 *
 !/.gitignore
-!/backend/
-!/backend/chat-service/
-!/backend/chat-service/**
+!/graphrag-frontend/
+!/graphrag-frontend/**
