@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
 from app.chat import router as chat_router
-from app.forgot_password import router as forgot_password_router
 
 from dotenv import load_dotenv
 
