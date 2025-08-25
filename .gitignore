@@ -1,4 +1,8 @@
 *
 !/.gitignore
+!/backend/
+!/backend/**
+!/graphrag-frontend/
+!/graphrag-frontend/**
 !/nginx/
 !/nginx/**

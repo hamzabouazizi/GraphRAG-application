@@ -9,9 +9,10 @@ from app.embedding import (
     min_max_normalize,
     mmr_select,
 )
-from app.models import ChatRequest, ChatResponse
+from app.conversation_store import ensure_conversation, load_history, append_turns
 from fastapi.responses import JSONResponse
 import openai
+import uuid
 from openai import OpenAI
 import os
 import json
@@ -20,6 +21,30 @@ import numpy as np
 router = APIRouter()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
+
+
+def condense_question(history: list[dict], follow_up: str) -> str:
+    """
+    Use last ~10 turns to rewrite a follow-up into a standalone question.
+    If no history, just return the original question.
+    """
+    if not history:
+        return (follow_up or "").strip()
+
+    prompt = (
+        "Rewrite the follow-up question into a standalone question that includes any "
+        "necessary context from the conversation history.\n\n"
+        f"History:\n{json.dumps(history[-10:], indent=2)}\n\n"
+        f"Follow-up: {follow_up}\n\n"
+        "Standalone:"
+    )
+    resp = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        temperature=0,
+        messages=[{"role": "system", "content": prompt}]
+    )
+    return (resp.choices[0].message.content or "").strip()
+
 
 
 def is_broad_question(q: str) -> bool:
@@ -40,6 +65,7 @@ def dynamic_top_k(question: str, base_k: int) -> int:
 
 
 class ChatRequest(BaseModel):
+    conversation_id: str | None = None
     question: str
     top_k: int = 5  # how many chunks to use
     alpha: float = 0.7  # blend: 1.0=cosine only, 0.0=BM25 only
@@ -55,11 +81,21 @@ async def chat_endpoint(request: ChatRequest, user: dict = Depends(get_current_u
     user_email = user.get("email")
     print("EMAIL from token:", user_email)
     print("DEBUG: question =", repr(request.question))
-
     if not user_email:
         raise HTTPException(status_code=400, detail="Missing user email")
+    
+    conv_id = await ensure_conversation(request.conversation_id, user_email)
 
-    query_embedding = embed_text(request.question)
+    # load the last turns (up to 10)
+    history = await load_history(conv_id, user_email, limit=10)
+
+    # Condense follow-up standalone
+    standalone_q = condense_question(history, request.question)
+    print("DEBUG: standalone question =", repr(standalone_q))
+
+
+
+    query_embedding = embed_text(standalone_q)
 
     try:
         print("DEBUG: query_embedding_dim =", len(query_embedding))
@@ -93,7 +129,7 @@ async def chat_endpoint(request: ChatRequest, user: dict = Depends(get_current_u
             ORDER BY score DESC
             LIMIT 100
             """,
-            {"q": request.question, "email": user_email},
+            {"q": standalone_q, "email": user_email},
         )
         bm25_hits = await bm25_res.data()
 
@@ -196,6 +232,8 @@ async def chat_endpoint(request: ChatRequest, user: dict = Depends(get_current_u
             {"role": "user", "content": prompt},
         ],
     )
+    
+    await append_turns(conv_id, user_email, request.question, response.model_dump()["choices"][0]["message"]["content"])
 
     return ChatResponse(
         answer=response.model_dump()["choices"][0]["message"]["content"]
