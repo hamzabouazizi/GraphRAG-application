@@ -14,8 +14,7 @@ const LoginPage: React.FC = () => {
     mode: 'login' | 'signup'
   ) => {
     try {
-      let token: string;
-
+      let token: string | undefined;
       if (mode === 'login') {
         const response = await login(email, password);
         token = response.token;
@@ -24,9 +23,7 @@ const LoginPage: React.FC = () => {
         const response = await login(email, password);
         token = response.token;
       }
-
       if (!token) throw new Error('No token returned from backend');
-
       setAuthToken(token);
       navigate('/home');
     } catch (err: any) {
