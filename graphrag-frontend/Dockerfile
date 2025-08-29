@@ -15,7 +15,7 @@ COPY graphrag-frontend/. .
 
 # Expose React dev server port
 EXPOSE 3000
-
+COPY nginx/dev.conf /etc/nginx/conf.d/default.conf
 # Start React in hot-reload mode
 CMD ["npm", "start"]
 
@@ -31,7 +31,7 @@ RUN npm run build
 FROM nginx:alpine AS prod
 # Copy build output to nginx html directory
 COPY --from=build /app/build /usr/share/nginx/html
-COPY nginx/dev.conf /etc/nginx/conf.d/default.conf
+COPY nginx/prod.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
