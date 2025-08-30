@@ -1,7 +1,6 @@
-# auth.py
 import os
 import httpx
-from fastapi import HTTPException, Header
+from fastapi import HTTPException, Header, Request
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from dotenv import load_dotenv
@@ -46,3 +45,9 @@ async def get_current_user(authorization: str = Header(...)):
             status_code=HTTP_401_UNAUTHORIZED,
             detail="Invalid response from user service",
         )
+    
+async def get_current_user_for_sse(request: Request, token: str | None):
+    authorization: str | None = request.headers.get("Authorization")
+    if not authorization and token:
+        authorization = f"Bearer {token}"
+    return await get_current_user(authorization)

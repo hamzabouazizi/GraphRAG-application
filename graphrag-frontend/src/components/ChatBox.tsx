@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { sendChatMessage } from '../api/chat';
+import { sendChatMessage, streamChatMessage } from '../api/chat';
+
 
 interface ChatMessage {
   sender: 'user' | 'bot';
@@ -13,8 +14,9 @@ const ChatBox: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [partial, setPartial] = useState('');
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim() || !token) return;
 
     setErrorMessage('');
@@ -22,18 +24,29 @@ const ChatBox: React.FC = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
+    setPartial('');
 
-    try {
-      const data = await sendChatMessage(input, token);
-      const botMessage: ChatMessage = { sender: 'bot', text: data.answer };
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error(error);
-      setErrorMessage('Failed to get response from chat backend.');
-    } finally {
-      setLoading(false);
-    }
+    streamChatMessage({
+      question: userMessage.text,
+      token,
+      onStart: () => {
+      },
+      onToken: (chunk) => {
+        setPartial((prev) => prev + chunk);
+      },
+      onEnd: (finalText) => {
+        setMessages((prev) => [...prev, { sender: 'bot', text: finalText }]);
+        setPartial('');
+        setLoading(false);
+      },
+      onError: () => {
+        setErrorMessage('Failed to get response from chat backend.');
+        setPartial('');
+        setLoading(false);
+      },
+    });
   };
+
 
   return (
     <div style={styles.card}>
@@ -48,6 +61,11 @@ const ChatBox: React.FC = () => {
             {msg.text}
           </div>
         ))}
+        {partial && (
+          <div style={styles.botMsg}>
+            {partial}
+          </div>
+        )}
       </div>
 
       <div style={styles.inputArea}>
