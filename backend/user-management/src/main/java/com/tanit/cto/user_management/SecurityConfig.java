@@ -49,7 +49,14 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/signup", "/login").permitAll()
+                        .requestMatchers(
+                                "/signup",
+                                "/login",
+                                "/health",
+                                "/actuator/health",
+                                "/actuator/health/**",
+                                "/actuator/prometheus")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
