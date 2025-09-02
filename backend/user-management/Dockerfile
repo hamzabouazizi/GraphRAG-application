@@ -1,40 +1,38 @@
-# Stage 1: Build dependencies (cache)
+# Build dependencies 
 FROM maven:3.9.10-eclipse-temurin-21 AS deps
 WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
-# Stage 2: Development build
+# Development build
 FROM maven:3.9.10-eclipse-temurin-21 AS dev
 WORKDIR /app
-
-# Copy cached dependencies
+# copy cached dependencies
 COPY --from=deps /root/.m2 /root/.m2
-
-# Copy source for dev mode
 COPY . .
-
-# Enable file watching for hot reload
+# hot reload
 ENV SPRING_PROFILES_ACTIVE=dev
-RUN mvn compile  # compile classes so they exist for find, etc.
-
+RUN mvn compile  
 CMD ["mvn", "spring-boot:run"]
 
-# Stage 3: Production build
+# Production build
 FROM maven:3.9.10-eclipse-temurin-21 AS builder
 WORKDIR /app
 COPY --from=deps /root/.m2 /root/.m2
 COPY . .
 RUN mvn clean package -DskipTests
 
-# Stage 4: Runtime base
+# Runtime base
 FROM eclipse-temurin:21.0.7_6-jdk-alpine AS base
 WORKDIR /app
 EXPOSE 8080
 
+# Create non-root (Spring) user
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
 # Dev runtime
 FROM dev AS dev-runtime
-# already handled in CMD above
 
 # Prod runtime
 FROM base AS prod
