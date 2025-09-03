@@ -21,9 +21,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Start services with Docker Compose
-        run: |
-          docker-compose -f docker-compose.dev.yml up -d --build
+      - name: build images with Docker Compose
+        run: docker-compose -f docker-compose.dev.yml build
+
+      - name: Push images to GHCR
+        run: docker-compose -f docker-compose.dev.yml push
+
+      - name: Start services
+        run: docker-compose -f docker-compose.dev.yml up -d
 
       - name: List running containers
         run: docker ps

@@ -5,6 +5,7 @@ services:
     build:
       context: ./backend/user-management
       target: dev-runtime
+    image: ghcr.io/hamzabouazizi/user-management:dev
     ports:
       - "8080:8080"
     environment:
@@ -23,6 +24,7 @@ services:
     build:
       context: ./backend/pdf-graphrag-service
       target: dev
+    image: ghcr.io/hamzabouazizi/pdf-graphrag-service:dev
     volumes:
       - ./backend/pdf-graphrag-service/src:/app/src
     ports:
@@ -42,6 +44,7 @@ services:
     build:
       context: ./backend/chat-service
       target: dev
+    image: ghcr.io/hamzabouazizi/chat-service:dev
     volumes:
       - ./backend/chat-service/src:/app/src
     ports:
@@ -60,6 +63,7 @@ services:
     build:
       context: ./graphrag-frontend
       target: dev
+    image: ghcr.io/hamzabouazizi/graphrag-frontend:dev
     volumes:
       - ./graphrag-frontend:/app
       - /app/node_modules
