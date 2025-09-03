@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  user-management:
+    build:
+      context: ./backend/user-management
+      target: dev-runtime
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_NEO4J_URI: ${NEO4J_BOLT_INTERNAL}
+      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
+      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
+      SPRING_DEVTOOLS_REMOTE_SECRET: ${SPRING_DEVTOOLS_REMOTE_SECRET}
+    volumes:
+      - ./backend/user-management/src:/app/src:rw #live reload
+      - ./backend/user-management/pom.xml:/app/pom.xml:rw #live reload
+    depends_on:
+      - neo4j
+
+  pdf-graphrag-service:
+    build:
+      context: ./backend/pdf-graphrag-service
+      target: dev
+    volumes:
+      - ./backend/pdf-graphrag-service/src:/app/src
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEO4J_URI=${NEO4J_BOLT_INTERNAL}
+      - NEO4J_USER=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - USER_MGMT_URL=${USER_MGMT_URL}
+      - LOG_LEVEL=debug
+    depends_on:
+      - user-management
+      - neo4j
+
+  chat-service:
+    build:
+      context: ./backend/chat-service
+      target: dev
+    volumes:
+      - ./backend/chat-service/src:/app/src
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEO4J_URI=${NEO4J_BOLT_INTERNAL}
+      - NEO4J_USER=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - USER_MGMT_URL=${USER_MGMT_URL}
+    depends_on:
+      - user-management
+      - neo4j
+
+  graphrag-frontend:
+    build:
+      context: ./graphrag-frontend
+      target: dev
+    volumes:
+      - ./graphrag-frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:80"
+    stdin_open: true
+    tty: true
+
+  neo4j:
+    image: neo4j:latest
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+    volumes:
+      - "${NEO4J_DATA_DIR}:/data"
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+
+  nginx:
+    image: nginx:1.27
+    container_name: nginx-dev
+    volumes:
+      - ./nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - graphrag-frontend
+      - pdf-graphrag-service
+      - chat-service
+      - user-management

@@ -6,3 +6,6 @@
 !/graphrag-frontend/**
 !/nginx/
 !/nginx/**
+!/docker-compose.dev.yml
+!/.github/
+!/.github/**
