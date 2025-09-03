@@ -6,6 +6,10 @@ on:
       - dev
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   run-containers:
     runs-on: ubuntu-latest
