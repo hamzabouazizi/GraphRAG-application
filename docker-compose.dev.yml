@@ -61,7 +61,8 @@ services:
 
   graphrag-frontend:
     build:
-      context: ./graphrag-frontend
+      context: .
+      dockerfile: graphrag-frontend/Dockerfile
       target: dev
     image: ghcr.io/hamzabouazizi/graphrag-frontend:dev
     volumes:
