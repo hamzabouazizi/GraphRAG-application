@@ -9,6 +9,16 @@ on:
 jobs:
   run-containers:
     runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      NEO4J_BOLT_INTERNAL: ${{ secrets.NEO4J_BOLT_INTERNAL }}
+      NEO4J_USERNAME: ${{ secrets.NEO4J_USERNAME }}
+      NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+      SPRING_DEVTOOLS_REMOTE_SECRET: ${{ secrets.SPRING_DEVTOOLS_REMOTE_SECRET }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      USER_MGMT_URL: ${{ secrets.USER_MGMT_URL }}
+      NEO4J_DATA_DIR: ${{ secrets.NEO4J_DATA_DIR }}
+      NEO4J_AUTH: ${{ secrets.NEO4J_AUTH }}
 
     steps:
       - name: Checkout repo
