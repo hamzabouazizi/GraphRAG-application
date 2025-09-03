@@ -32,8 +32,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: hamzabouazizi
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: build images with Docker Compose
         run: docker compose -f docker-compose.dev.yml build
