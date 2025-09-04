@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   run-containers:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       NEO4J_BOLT_INTERNAL: ${{ secrets.NEO4J_BOLT_INTERNAL }}
