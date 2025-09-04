@@ -93,3 +93,16 @@ def ensure_indexes():
         CREATE FULLTEXT INDEX chunkText IF NOT EXISTS FOR (c:Chunk) ON EACH [c.text]
         """)
 
+def check_connection() -> bool:
+    """
+    Verify Neo4j connection is alive.
+    """
+    try:
+        with _driver.session() as session:
+            session.run("RETURN 1")
+        return True
+    except Exception as e:
+        print(f"Neo4j connection failed: {e}")
+        return False
+
+

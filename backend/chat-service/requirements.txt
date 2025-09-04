@@ -7,3 +7,4 @@ neo4j
 requests
 numpy
 sse-starlette>=1.6.1
+prometheus-fastapi-instrumentator

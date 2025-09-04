@@ -1,3 +1,4 @@
+import httpx
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
 import requests
@@ -5,16 +6,21 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import hashlib
+from prometheus_fastapi_instrumentator import Instrumentator
 from app.graph_store import ensure_indexes
 
 from app.pdf_ingest import extract_and_chunk
 from app.graph_store import write_chunks
+from app.graph_store import check_connection
 from app.config import settings
 from app.embedding import compute_embeddings
 from app.graph_store import write_chunks, pdf_exists
 
 
 app = FastAPI(title="PDF GraphRAG Service")
+
+Instrumentator().instrument(app).expose(app)
+
 
 # Ensure index exists on startup
 ensure_indexes()
@@ -102,6 +108,25 @@ async def upload_pdf(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/health/liveness")
+async def liveness():
+    return {"status": "alive"}
+
+@app.get("/health/readiness")
+async def readiness():
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.get(f"{settings.USER_MGMT_URL}/profile")
+            if resp.status_code != 200:
+                return {"status": "not ready", "reason": "user-management unavailable"}
+    except Exception as e:
+        return {"status": "not ready", "reason": f"user-management error: {str(e)}"}
+
+    if not check_connection():
+        return {"status": "not ready", "reason": "neo4j unavailable"}
+
+    return {"status": "ready"}
 
 
 if __name__ == "__main__":
