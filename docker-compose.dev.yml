@@ -15,6 +15,12 @@ services:
     volumes:
       - ./backend/user-management/src:/app/src:rw #live reload
       - ./backend/user-management/pom.xml:/app/pom.xml:rw #live reload
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+      timeout: 5s
     depends_on:
       - neo4j
 
@@ -34,6 +40,12 @@ services:
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - USER_MGMT_URL=${USER_MGMT_URL}
       - LOG_LEVEL=debug
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health/liveness" ]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+      timeout: 5s
     depends_on:
       - user-management
       - neo4j
@@ -53,6 +65,12 @@ services:
       - NEO4J_USER=${NEO4J_USERNAME}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - USER_MGMT_URL=${USER_MGMT_URL}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health/liveness" ]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+      timeout: 5s
     depends_on:
       - user-management
       - neo4j
@@ -89,7 +107,11 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - graphrag-frontend
-      - pdf-graphrag-service
-      - chat-service
-      - user-management
+      graphrag-frontend:
+        condition: service_started
+      pdf-graphrag-service:
+        condition: service_healthy
+      chat-service:
+        condition: service_healthy
+      user-management:
+        condition: service_healthy
