@@ -21,7 +21,7 @@ jobs:
       SPRING_DEVTOOLS_REMOTE_SECRET: ${{ secrets.SPRING_DEVTOOLS_REMOTE_SECRET }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       USER_MGMT_URL: ${{ secrets.USER_MGMT_URL }}
-      NEO4J_DATA_DIR: /tmp/neo4j-data
+      NEO4J_DATA_DIR: ${{ secrets.NEO4J_DATA_DIR }}
       NEO4J_AUTH: ${{ secrets.NEO4J_AUTH }}
 
     steps:
