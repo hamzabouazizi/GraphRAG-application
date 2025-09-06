@@ -16,7 +16,7 @@ services:
       - ./backend/user-management/src:/app/src:rw #live reload
       - ./backend/user-management/pom.xml:/app/pom.xml:rw #live reload
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1" ]
       interval: 5s
       retries: 10
       start_period: 10s
