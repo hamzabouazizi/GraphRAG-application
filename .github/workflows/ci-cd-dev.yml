@@ -49,17 +49,15 @@ jobs:
         run: docker ps -a --format "table {{.Names}}\t{{.Status}}"
 
       - name: Inspect all container health
-        shell: bash
         run: |
-          for c in $(docker ps -a -q); do
-            echo "---- $c ----"
-            docker inspect --format='{{.Name}} {{.State.Status}} {{json .State.Health}}' $c || true
-          done
+          docker ps -a -q | ForEach-Object {
+            Write-Output "---- $_ ----"
+            docker inspect --format='{{.Name}} {{.State.Status}} {{json .State.Health}}' $_
+          }
 
       - name: Logs for all containers
-        shell: bash
         run: |
-          for c in $(docker ps -a -q); do
-            echo "---- Logs for $c ----"
-            docker logs --tail=100 $c || true
-          done
+          docker ps -a -q | ForEach-Object {
+            Write-Output "---- Logs for $_ ----"
+            docker logs --tail=100 $_
+          }
