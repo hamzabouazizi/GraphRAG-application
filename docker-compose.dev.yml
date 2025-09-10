@@ -42,7 +42,7 @@ services:
       - USER_MGMT_URL=${USER_MGMT_URL}
       - LOG_LEVEL=debug
     healthcheck:
-      test: [ "CMD-SHELL", "wget --spider -q http://localhost:8000/health/liveness || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health/liveness || exit 1" ]
       interval: 10s
       retries: 30
       start_period: 60s
@@ -67,7 +67,7 @@ services:
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - USER_MGMT_URL=${USER_MGMT_URL}
     healthcheck:
-      test: [ "CMD-SHELL", "wget --spider -q http://localhost:8001/health/liveness || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8001/health/liveness || exit 1" ]
       interval: 10s
       retries: 30
       start_period: 60s
