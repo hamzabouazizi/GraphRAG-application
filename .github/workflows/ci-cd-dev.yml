@@ -46,7 +46,7 @@ jobs:
         continue-on-error: true
 
       - name: Show all containers (including stopped)
-        run: docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.ExitCode}}"
+        run: docker ps -a --format "table {{.Names}}\t{{.Status}}"
 
       - name: Inspect all container health
         run: |
