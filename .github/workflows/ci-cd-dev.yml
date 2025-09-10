@@ -49,6 +49,7 @@ jobs:
         run: docker ps -a --format "table {{.Names}}\t{{.Status}}"
 
       - name: Inspect all container health
+        shell: bash
         run: |
           for c in $(docker ps -a -q); do
             echo "---- $c ----"
@@ -56,6 +57,7 @@ jobs:
           done
 
       - name: Logs for all containers
+        shell: bash
         run: |
           for c in $(docker ps -a -q); do
             echo "---- Logs for $c ----"
