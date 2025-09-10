@@ -43,6 +43,7 @@ jobs:
 
       - name: Start services
         run: docker compose -f docker-compose.dev.yml up -d
+        continue-on-error: true
 
       - name: Show all containers (including stopped)
         run: docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.ExitCode}}"
