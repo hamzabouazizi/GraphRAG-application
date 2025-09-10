@@ -44,5 +44,19 @@ jobs:
       - name: Start services
         run: docker compose -f docker-compose.dev.yml up -d
 
-      - name: List running containers
-        run: docker ps
+      - name: Show all containers (including stopped)
+        run: docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.ExitCode}}"
+
+      - name: Inspect all container health
+        run: |
+          for c in $(docker ps -a -q); do
+            echo "---- $c ----"
+            docker inspect --format='{{.Name}} {{.State.Status}} {{json .State.Health}}' $c || true
+          done
+
+      - name: Logs for all containers
+        run: |
+          for c in $(docker ps -a -q); do
+            echo "---- Logs for $c ----"
+            docker logs --tail=100 $c || true
+          done
