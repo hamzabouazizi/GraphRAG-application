@@ -36,7 +36,7 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
 
       - name: build images with Docker Compose
-        run: docker compose -f docker-compose.dev.yml build --no-cache
+        run: docker compose -f docker-compose.dev.yml build 
 
       - name: Push images to GHCR
         run: docker compose -f docker-compose.dev.yml push
