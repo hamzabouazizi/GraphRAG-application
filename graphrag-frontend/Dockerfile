@@ -17,13 +17,23 @@ FROM nginx:alpine AS base
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
+# Dev Stage (hot-reload using the React dev server)
+FROM node:20-alpine AS dev
+WORKDIR /app
 
-# Dev Stage 
-FROM base AS dev
-COPY nginx/dev.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/app/build /usr/share/nginx/html
+# copy package files and install inside the dev image
+COPY graphrag-frontend/package*.json ./
+RUN npm install --no-cache
+
+# copy app source for hot-reload
+COPY graphrag-frontend/ ./
+
+# ensure the dev server listens on all interfaces
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
 EXPOSE 3000
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "start"]
 
 # Prod Stage 
 FROM base AS prod
