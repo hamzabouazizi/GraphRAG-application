@@ -90,6 +90,7 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     ports:
       - "3000:3000"
 

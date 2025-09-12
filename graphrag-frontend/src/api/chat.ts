@@ -1,6 +1,6 @@
 export async function sendChatMessage(question: string, token: string) {
 
-  const response = await fetch(`${process.env.REACT_APP_CHAT_URL}/chat/`, {
+  const response = await fetch(`/chat/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,11 +51,7 @@ export function streamChatMessage({
   params.set("use_mmr", String(useMmr));
   if (token) params.set("token", token);
 
-  //const url = `${process.env.REACT_APP_CHAT_URL.replace(/\/$/, "")}/chat/stream?${params.toString()}`;
-  if (!process.env.REACT_APP_CHAT_URL) {
-    throw new Error("REACT_APP_CHAT_URL is not defined");
-  }
-  const url = `${process.env.REACT_APP_CHAT_URL.replace(/\/$/, "")}/chat/stream?${params.toString()}`;
+  const url = `/chat/stream?${params.toString()}`;
 
 
   const es = new EventSource(url);

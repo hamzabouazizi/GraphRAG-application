@@ -22,8 +22,9 @@ app = FastAPI(title="PDF GraphRAG Service")
 Instrumentator().instrument(app).expose(app)
 
 
-# Ensure index exists on startup
-ensure_indexes()
+@app.on_event("startup")
+def startup_event():
+    ensure_indexes(retries=10, delay=5)
 
 # Allow requests from React
 origins = ["http://localhost", "http://localhost:3000"]

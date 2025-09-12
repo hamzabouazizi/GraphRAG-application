@@ -1,4 +1,6 @@
+import time
 from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable, ClientError
 from app.config import settings
 import uuid
 
@@ -19,7 +21,7 @@ def pdf_exists(pdf_hash: str, user_email: str) -> bool:
             MATCH (c:Chunk {user_email: $user_email, pdf_hash: $pdf_hash})
             RETURN count(c) AS count
             """,
-            {"user_email": user_email, "pdf_hash": pdf_hash}
+            {"user_email": user_email, "pdf_hash": pdf_hash},
         )
         return result.single()["count"] > 0
 
@@ -30,7 +32,7 @@ def write_chunks(
     pages: list[int],
     user_email: str,
     pdf_hash: str,
-    file_name: str
+    file_name: str,
 ) -> None:
     """
     Store each text chunk + its embedding + its page in Neo4j.
@@ -41,13 +43,13 @@ def write_chunks(
             f"Length mismatch: chunks={len(chunks)}, embeddings={len(embeddings)}, pages={len(pages)}"
         )
     with _driver.session() as session:
-        # Check if already exists 
+        # Check if already exists
         result = session.run(
             """
             MATCH (c:Chunk {user_email: $user_email, pdf_hash: $pdf_hash})
             RETURN count(c) AS count
             """,
-            {"user_email": user_email, "pdf_hash": pdf_hash}
+            {"user_email": user_email, "pdf_hash": pdf_hash},
         )
 
         if result.single()["count"] > 0:
@@ -84,14 +86,38 @@ def write_chunks(
                     "pdf_hash": pdf_hash,
                     "file_name": file_name,
                     "page": int(page),
-                }
+                },
             )
 
-def ensure_indexes():
-    with _driver.session() as session:
-        session.run("""
-        CREATE FULLTEXT INDEX chunkText IF NOT EXISTS FOR (c:Chunk) ON EACH [c.text]
-        """)
+
+def ensure_indexes(retries=10, delay=5):
+    """
+    Ensure the fulltext index 'chunkText' exists.
+    Retries if Neo4j is not ready. Ignores 'already exists' errors.
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            with _driver.session() as session:
+                session.run(
+                    """
+                CREATE FULLTEXT INDEX chunkText FOR (c:Chunk) ON EACH [c.text]
+                """
+                )
+            print("Neo4j index 'chunkText' ensured.")
+            return
+        except ServiceUnavailable:
+            print(
+                f"Neo4j not ready (attempt {attempt}/{retries}), retrying in {delay}s..."
+            )
+            time.sleep(delay)
+        except ClientError as e:
+            if "already exists" in str(e):
+                print("Neo4j index 'chunkText' already exists, skipping creation.")
+                return
+            else:
+                raise e
+    raise RuntimeError("Failed to connect to Neo4j after multiple retries")
+
 
 def check_connection() -> bool:
     """
@@ -104,5 +130,3 @@ def check_connection() -> bool:
     except Exception as e:
         print(f"Neo4j connection failed: {e}")
         return False
-
-

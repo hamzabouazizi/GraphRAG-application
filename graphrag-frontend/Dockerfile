@@ -23,6 +23,7 @@ WORKDIR /app
 
 # copy package files and install inside the dev image
 COPY graphrag-frontend/package*.json ./
+
 RUN npm install --no-cache
 
 # copy app source for hot-reload
