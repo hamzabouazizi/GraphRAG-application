@@ -21,7 +21,7 @@ import json
 import numpy as np
 
 router = APIRouter()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY").strip()
 client = OpenAI()
 
 
