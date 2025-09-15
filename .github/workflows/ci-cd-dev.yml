@@ -63,4 +63,4 @@ jobs:
           }
       - name: Cleanup Docker
         run: |
-          docker system prune -f
+          docker builder prune -f
