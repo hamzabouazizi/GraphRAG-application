@@ -7,6 +7,7 @@ RUN mvn dependency:go-offline
 # Development build
 FROM maven:3.9.10-eclipse-temurin-21 AS dev
 WORKDIR /app
+RUN apt-get update && apt-get install -y curl grep && rm -rf /var/lib/apt/lists/*
 # copy cached dependencies
 COPY --from=deps /root/.m2 /root/.m2
 COPY . .
@@ -25,6 +26,7 @@ RUN mvn clean package -DskipTests
 # Runtime base
 FROM eclipse-temurin:21.0.7_6-jdk-alpine AS base
 WORKDIR /app
+RUN apk add --no-cache curl grep
 EXPOSE 8080
 
 # Create non-root (Spring) user

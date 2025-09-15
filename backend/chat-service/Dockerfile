@@ -23,7 +23,7 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # install curl for healthcheck
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
+RUN apt-get update && apt-get install -y --no-install-recommends curl grep \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /install /usr/local

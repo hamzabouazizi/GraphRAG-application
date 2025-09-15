@@ -16,10 +16,12 @@ RUN npm run build
 FROM nginx:alpine AS base
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN apk add --no-cache curl grep
 
 # Dev Stage (hot-reload using the React dev server)
 FROM node:20-alpine AS dev
 WORKDIR /app
+RUN apk add --no-cache curl grep
 
 # copy package files and install inside the dev image
 COPY graphrag-frontend/package*.json ./
