@@ -73,62 +73,79 @@ const HomePage: React.FC = () => {
     exit: { opacity: 0, x: -20 },
   };
 
-  const renderLeft = (): React.ReactElement => {
-    return activeTab === 1 ? (
-      <motion.div
-        key="left-tab-1"
-        variants={tabContentVariants}
-        initial="hidden"
-        animate="enter"
-        exit="exit"
-        transition={{ duration: 0.33 }}
-        style={{ width: "100%" }}
-      >
-        <UploadBox />
-      </motion.div>
-    ) : (
-      <motion.div
-        key={`left-tab-${activeTab}`}
-        variants={tabContentVariants}
-        initial="hidden"
-        animate="enter"
-        exit="exit"
-        transition={{ duration: 0.33 }}
-        style={styles.placeholder}
-      >
-        Content for Tab {activeTab} (Left)
-      </motion.div>
-    );
+  const renderContent = (): React.ReactElement => {
+    if (activeTab === 1) {
+      return (
+        <motion.div
+          key="tab-1"
+          variants={tabContentVariants}
+          initial="hidden"
+          animate="enter"
+          exit="exit"
+          transition={{ duration: 0.33 }}
+          style={{ width: "100%" }}
+        >
+          <UploadBox />
+        </motion.div>
+      );
+    }
+
+    if (activeTab === 2) {
+      return (
+        <motion.div
+          key="tab-2"
+          variants={tabContentVariants}
+          initial="hidden"
+          animate="enter"
+          exit="exit"
+          transition={{ duration: 0.33 }}
+          style={{ width: "100%" }}
+        >
+          <ChatBox />
+        </motion.div>
+      );
+    }
+
+    if (activeTab === 3) {
+      return (
+        <motion.div
+          key="tab-3"
+          variants={tabContentVariants}
+          initial="hidden"
+          animate="enter"
+          exit="exit"
+          transition={{ duration: 0.33 }}
+          style={styles.placeholder}
+        >
+          Here you will see your uploaded documents.
+        </motion.div>
+      );
+    }
+
+    if (activeTab === 4) {
+      return (
+        <motion.div
+          key="tab-4"
+          variants={tabContentVariants}
+          initial="hidden"
+          animate="enter"
+          exit="exit"
+          transition={{ duration: 0.33 }}
+          style={{ width: "100%", textAlign: "center" }}
+        >
+          <h2>
+            You are logged in as <strong>{email}</strong>
+          </h2>
+          <button onClick={handleLogout} style={styles.outlineBtn}>
+            Logout
+          </button>
+        </motion.div>
+      );
+    }
+
+    return <></>;
   };
 
-
-  const renderRight = (): React.ReactElement => {
-    return activeTab === 1 ? (
-      <motion.div
-        key="right-tab-1"
-        variants={tabContentVariants}
-        initial="hidden"
-        animate="enter"
-        exit="exit"
-        transition={{ duration: 0.33 }}
-        style={{ width: "100%" }}
-      >
-        <ChatBox />
-      </motion.div>
-    ) : (
-      <motion.div
-        key={`right-tab-${activeTab}`}
-        variants={tabContentVariants}
-        initial="hidden"
-        animate="enter"
-        exit="exit"
-        transition={{ duration: 0.33 }}
-        style={styles.placeholder}
-      >
-        Content for Tab {activeTab} (Right)
-      </motion.div>
-    );
-  };
 
 
   return (
@@ -143,16 +160,14 @@ const HomePage: React.FC = () => {
 
 
         <div style={styles.tabBar}>
-          <TabButton label="Tab 1" active={activeTab === 1} onClick={() => setActiveTab(1)} />
-          <TabButton label="Tab 2" active={activeTab === 2} onClick={() => setActiveTab(2)} />
-          <TabButton label="Tab 3" active={activeTab === 3} onClick={() => setActiveTab(3)} />
-          <TabButton label="Tab 4" active={activeTab === 4} onClick={() => setActiveTab(4)} />
+          <TabButton label="Upload your Document" active={activeTab === 1} onClick={() => setActiveTab(1)} />
+          <TabButton label="Ask your Document" active={activeTab === 2} onClick={() => setActiveTab(2)} />
+          <TabButton label="My Documents" active={activeTab === 3} onClick={() => setActiveTab(3)} />
+          <TabButton label="Account" active={activeTab === 4} onClick={() => setActiveTab(4)} />
         </div>
 
-
         <div style={styles.grid}>
-          <div style={styles.card}>{renderLeft()}</div>
-          <div style={styles.card}>{renderRight()}</div>
+          <div style={styles.card}>{renderContent()}</div>
         </div>
       </div>
     </div>
@@ -165,9 +180,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   outlineBtn: {
     padding: '0.6rem 1rem',
     borderRadius: '6px',
-    background: 'white',
-    color: '#5A4FCF',
-    border: '1px solid #5A4FCF',
+    background: 'linear-gradient(to right, #5A4FCF, #7E6DE0)',
+    color: 'white',
+    border: 'none',
     cursor: 'pointer',
     fontWeight: 'bold',
   },
@@ -178,18 +193,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: '2rem',
   },
   tabBtn: {
-    background: '#e6ecff',
+    background: 'linear-gradient(to right, #5A4FCF, #7E6DE0)',
     border: 'none',
     padding: '0.75rem 1.5rem',
     borderRadius: '8px',
     cursor: 'pointer',
     fontWeight: 600,
-    color: '#3a57e8',
+    color: 'white',
     transition: 'all 0.2s ease',
   },
   tabBtnActive: {
     background: '#3a57e8',
-    color: '#fff',
+    color: '#5A4FCF',
     boxShadow: '0 4px 12px rgba(58,87,232,0.3)',
     transform: 'translateY(-2px)',
   },
@@ -210,7 +225,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   placeholder: {
     textAlign: 'center',
-    color: '#999',
+    color: '#5A4FCF',
     fontStyle: 'italic',
     padding: '2rem 0',
   },
