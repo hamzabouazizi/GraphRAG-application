@@ -11,7 +11,7 @@ const tabContentVariants: Variants = {
   enter: { opacity: 1, x: 0 },
   exit: { opacity: 0, x: -20 },
 };
-// NOTE: replace your TabButton implementation with this (uses motion)
+
 const TabButton: React.FC<{
   label: string;
   active: boolean;
@@ -47,7 +47,7 @@ const TabButton: React.FC<{
             right: 8,
             bottom: 4,
             borderRadius: 4,
-            background: "linear-gradient(90deg,#1544ff,#3a8dff)", // blue gradient
+            background: "white",
             boxShadow: "0 6px 18px rgba(50,60,120,0.14)",
           }}
           transition={{ type: "spring", stiffness: 600, damping: 30 }}
@@ -151,12 +151,6 @@ const HomePage: React.FC = () => {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        <div style={styles.headerRow}>
-          <h1 style={styles.heading}>
-            You are logged in as <strong>{email}</strong>
-          </h1>
-          <button onClick={handleLogout} style={styles.outlineBtn}>Logout</button>
-        </div>
 
 
         <div style={styles.tabBar}>
@@ -202,15 +196,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white',
     transition: 'all 0.2s ease',
   },
+
   tabBtnActive: {
-    background: '#3a57e8',
-    color: '#5A4FCF',
-    boxShadow: '0 4px 12px rgba(58,87,232,0.3)',
+    background: 'linear-gradient(to right, #5A4FCF, #7E6DE0)',
+    color: 'white',
+    boxShadow: '0 4px 12px rgba(255,255,255,0.6)',
     transform: 'translateY(-2px)',
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: '1fr',
+    placeItems: 'center',
     gap: '1.5rem',
   },
   card: {
@@ -221,6 +217,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: '0.75rem',
   },
   placeholder: {

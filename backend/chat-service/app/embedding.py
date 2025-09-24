@@ -5,7 +5,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = OpenAI()
+api_key = os.getenv("OPENAI_API_KEY")
+if api_key:
+    api_key = api_key.strip().replace("\n", "")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY is missing. Check your .env file.")
+api_key = api_key.strip()
+
+client = OpenAI(api_key=api_key)
 
 
 def embed_text(text: str) -> list[float]:

@@ -21,8 +21,11 @@ import json
 import numpy as np
 
 router = APIRouter()
-openai.api_key = os.getenv("OPENAI_API_KEY").strip()
-client = OpenAI()
+api_key = os.getenv("OPENAI_API_KEY")
+if api_key:
+    api_key = api_key.strip().replace("\n", "")
+
+client = OpenAI(api_key=api_key)
 
 
 def condense_question(history: list[dict], follow_up: str) -> str:
