@@ -4,7 +4,7 @@ from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from app.chat import router as chat_router
-from app.neo4j_driver import get_driver
+from app.neo4j_driver import close_driver, get_driver
 from app.auth import PROFILE_ENDPOINT
 
 from dotenv import load_dotenv
@@ -52,3 +52,7 @@ async def readiness():
         return {"status": "not ready", "reason": f"neo4j error: {str(e)}"}
 
     return {"status": "ready"}
+
+@app.on_event("shutdown")
+def shutdown_event():
+    close_driver()

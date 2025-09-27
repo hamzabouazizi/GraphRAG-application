@@ -12,7 +12,7 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 if not all([NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD]):
     raise RuntimeError("Neo4j connection environment variables are not fully set")
 
-driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), max_connection_lifetime=1000)
 
 
 def get_driver():
