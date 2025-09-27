@@ -1,6 +1,9 @@
+from datetime import datetime, timezone
+import os
 import httpx
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
+from PyPDF2 import PdfReader
 import requests
 import uvicorn
 from fastapi import FastAPI
@@ -9,12 +12,15 @@ import hashlib
 from prometheus_fastapi_instrumentator import Instrumentator
 from app.graph_store import ensure_indexes
 
-from app.pdf_ingest import extract_and_chunk
+from app.pdf_ingest import compute_pdf_hash, extract_and_chunk
 from app.graph_store import write_chunks
 from app.graph_store import check_connection
 from app.config import settings
 from app.embedding import compute_embeddings
 from app.graph_store import write_chunks, pdf_exists
+from app.pdf_store import save_pdf
+from app.neo4j_driver import close_driver
+from app.auth import get_current_user
 
 
 app = FastAPI(title="PDF GraphRAG Service")
@@ -40,38 +46,27 @@ app.add_middleware(
 )
 
 
-# Dependency to fetch the current user from user-management service
-async def get_current_user(authorization: str = Header(..., alias="Authorization")):
-    """
-    Verifies the user's JWT token via the /profile endpoint in the user-management backend.
-    """
-    try:
-        response = requests.get(
-            f"{settings.USER_MGMT_URL}/profile",
-            headers={"Authorization": authorization},
-            timeout=5,
-        )
-        if response.status_code != 200:
-            raise HTTPException(status_code=401, detail="Unauthorized: invalid token")
-
-        print("get_current_user called")
-        return response.json()
-
-    except requests.RequestException:
-        raise HTTPException(status_code=500, detail="Could not validate user")
-
-
 @app.post("/upload-pdf")
 async def upload_pdf(
     file: UploadFile = File(...), user: dict = Depends(get_current_user)
 ):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+    
+    pdf_hash, pdf_bytes = await compute_pdf_hash(file)
+    
+    saved_path = await save_pdf(file, user["email"])
 
-    # Read and hash the PDF bytes
-    pdf_bytes = await file.read()
-    pdf_hash = hashlib.sha256(pdf_bytes).hexdigest()
+    uploaded_at = datetime.now(timezone.utc).isoformat()
+    file_size = len(pdf_bytes)
     print("PDF Hash:", pdf_hash)
+        
+    try:
+        pdf_reader = PdfReader(saved_path)
+        num_pages = len(pdf_reader.pages)
+    except Exception:
+        num_pages = None
+    
 
     user_email = user["email"]
     print("User info from /profile:", user)
@@ -84,6 +79,7 @@ async def upload_pdf(
                 "pdf_hash": pdf_hash,
                 "user_id": user_email,
                 "chunks": 0,
+                "file_name": file.filename,
             }
         )
 
@@ -97,6 +93,9 @@ async def upload_pdf(
             user_email=user_email,
             pdf_hash=pdf_hash,
             file_name=file.filename,
+            file_size=file_size,
+            num_pages=num_pages,
+            uploaded_at=uploaded_at,
         )
         return JSONResponse(
             content={
@@ -105,6 +104,9 @@ async def upload_pdf(
                 "user_id": user_email,
                 "pdf_hash": pdf_hash,
                 "file_name": file.filename,
+                "file_size": file_size,
+                "num_pages": num_pages,
+                "uploaded_at": uploaded_at,
             }
         )
     except Exception as e:
@@ -132,3 +134,7 @@ async def readiness():
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
+@app.on_event("shutdown")
+def shutdown_event():
+    close_driver()

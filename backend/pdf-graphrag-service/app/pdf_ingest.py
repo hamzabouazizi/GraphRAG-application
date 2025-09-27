@@ -3,6 +3,7 @@ import json
 from openai import OpenAI
 from app.config import settings
 import hashlib
+from fastapi import UploadFile
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -73,7 +74,12 @@ def extract_and_chunk(
 
     return all_chunks, all_pages
 
-
-def compute_pdf_hash(chunks: list[str]) -> str:
-    full_text = "".join(chunks)
-    return hashlib.sha256(full_text.encode("utf-8")).hexdigest()
+async def compute_pdf_hash(file: UploadFile) -> tuple[str, bytes]:
+    """
+    Compute a SHA256 hash of the raw PDF file content.
+    Ensures uniqueness even if extracted text is the same.
+    """
+    file_bytes = await file.read()
+    file.file.seek(0)  # reset pointer so the file can be read again later
+    pdf_hash = hashlib.sha256(file_bytes).hexdigest()
+    return pdf_hash, file_bytes
