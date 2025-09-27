@@ -1,16 +1,27 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.model;
 
-// Request object for login and signup.
+import java.util.HashSet;
+import java.util.Set;
 
-public class AuthRequest {
+import org.springframework.data.neo4j.core.schema.Id;
+import org.springframework.data.neo4j.core.schema.Node;
+
+@Node("User") // Neo4j node entity
+public class User {
+
+    @Id
     private String email;
+
     private String password;
+
     private String fullName;
 
-    public AuthRequest() {
+    private Set<String> roles = new HashSet<>();
+
+    public User() {
     }
 
-    public AuthRequest(String email, String password, String fullName) {
+    public User(String email, String password, String fullName) {
         this.email = email;
         this.password = password;
         this.fullName = fullName;
@@ -38,5 +49,17 @@ public class AuthRequest {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public Set<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<String> roles) {
+        this.roles = roles;
+    }
+
+    public void addRole(String role) {
+        this.roles.add(role);
     }
 }

@@ -1,9 +1,11 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.service;
 
-import com.tanit.cto.user_management.User;
-import com.tanit.cto.user_management.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.tanit.cto.user_management.model.AuthRequest;
+import com.tanit.cto.user_management.model.User;
+import com.tanit.cto.user_management.repository.UserRepository;
 
 import java.util.Optional;
 
@@ -25,6 +27,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
+        user.addRole("USER");
         return userRepository.save(user);
     }
 

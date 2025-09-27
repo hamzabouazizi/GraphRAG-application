@@ -1,4 +1,4 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.model;
 
 // Response object for successful login.
 

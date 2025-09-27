@@ -1,7 +1,8 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.lang.NonNull;
 
 import java.io.IOException;
 
@@ -26,19 +28,36 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain chain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain chain)
             throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
         String token = null;
         String email = null;
 
-        // Extract token and username
+        String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             token = header.substring(7);
-            email = jwtUtil.extractEmail(token);
+        }
+        if (token == null && request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwt".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (token != null) {
+            try {
+                email = jwtUtil.extractEmail(token);
+            } catch (Exception e) {
+                // Invalid or expired token → return 401 instead of letting Spring default to
+                // 403
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
+                return; // stop filter chain here
+            }
         }
 
         // Validate token and set authentication context

@@ -1,22 +1,21 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.model;
 
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
+// Request object for login and signup.
 
-@Node("User") // Neo4j node entity
-public class User {
-
-    @Id
+public class AuthRequest {
     private String email;
-
     private String password;
-
     private String fullName;
 
-    public User() {
+    public AuthRequest() {
     }
 
-    public User(String email, String password, String fullName) {
+    public AuthRequest(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
+    public AuthRequest(String email, String password, String fullName) {
         this.email = email;
         this.password = password;
         this.fullName = fullName;

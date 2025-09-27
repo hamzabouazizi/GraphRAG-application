@@ -1,11 +1,20 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.controller;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import com.tanit.cto.user_management.model.AuthRequest;
+import com.tanit.cto.user_management.model.AuthResponse;
+import com.tanit.cto.user_management.model.User;
+import com.tanit.cto.user_management.repository.UserRepository;
+import com.tanit.cto.user_management.security.JwtUtil;
+import com.tanit.cto.user_management.service.AuthService;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 // Controller exposing the /signup /login and /profile endpoints
 @RestController
@@ -37,14 +46,23 @@ public class UserController {
 
     // Authenticate a user and returns a JWT token
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpSession session) {
+    public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpServletResponse response) {
+
+        // authenticate via Spring Security
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         if (authentication.isAuthenticated()) {
-            session.setAttribute("user", request.getEmail());
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            String token = jwtUtil.generateToken(user.getEmail(), user.getRoles(), 24 * 60 * 60 * 1000);
+            Cookie cookie = new Cookie("jwt", token);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(24 * 60 * 60);
 
-            String token = jwtUtil.generateToken(request.getEmail());
+            response.addCookie(cookie);
             return ResponseEntity.ok(new AuthResponse(token));
         } else {
             return ResponseEntity.status(401).body("Invalid credentials");

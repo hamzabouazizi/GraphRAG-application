@@ -1,9 +1,12 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.security;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import com.tanit.cto.user_management.model.User;
+import com.tanit.cto.user_management.repository.UserRepository;
 
 // Load user-specific data for Spring Security
 @Service
@@ -15,7 +18,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
-    // Load a user from the database by email
+    // Load a user from the database by email (called internally by Spring
+    // Security’s DaoAuthenticationProvider)
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
@@ -24,7 +28,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
-                .authorities("USER")
+                .roles("USER")
                 .build();
     }
 }

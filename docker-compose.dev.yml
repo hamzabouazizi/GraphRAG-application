@@ -25,6 +25,22 @@ services:
       neo4j:
         condition: service_healthy
 
+  user-management-test:
+    build:
+      context: ./backend/user-management
+      target: test
+    profiles: [ "test" ]
+    image: ghcr.io/hamzabouazizi/user-management:test
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_NEO4J_URI: ${NEO4J_BOLT_INTERNAL}
+      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
+      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
+      SPRING_DEVTOOLS_REMOTE_SECRET: ${SPRING_DEVTOOLS_REMOTE_SECRET}
+    depends_on:
+      neo4j:
+        condition: service_healthy
+
   pdf-graphrag-service:
     build:
       context: ./backend/pdf-graphrag-service
@@ -32,6 +48,7 @@ services:
     image: ghcr.io/hamzabouazizi/pdf-graphrag-service:dev
     volumes:
       - ./backend/pdf-graphrag-service/src:/app/src
+      - "${PDF_STORAGE_DIR}:/app/storage/pdfs"
     ports:
       - "8000:8000"
     environment:
@@ -48,8 +65,10 @@ services:
       start_period: 120s
       timeout: 30s
     depends_on:
-      - user-management
-      - neo4j
+      user-management:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
 
   chat-service:
     build:

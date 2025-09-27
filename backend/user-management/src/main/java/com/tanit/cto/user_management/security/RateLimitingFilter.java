@@ -1,5 +1,8 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.security;
 
+import jakarta.servlet.FilterChain;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
@@ -9,6 +12,9 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -27,27 +33,36 @@ import java.util.concurrent.ConcurrentHashMap;
  * - Global -> per IP (max 100/minute)
  * 
  */
+@Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
-    public RateLimitingFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
-
     private final Map<String, RateLimitCounter> ipCounters = new ConcurrentHashMap<>();
     private final Map<String, RateLimitCounter> userCounters = new ConcurrentHashMap<>();
 
+    private boolean rateLimitEnabled;
+
+    public RateLimitingFilter(JwtUtil jwtUtil, @Value("${rate.limit.enabled:true}") boolean rateLimitEnabled) {
+        this.jwtUtil = jwtUtil;
+        this.rateLimitEnabled = rateLimitEnabled;
+    }
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            jakarta.servlet.FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain chain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
         String clientIp = request.getRemoteAddr();
 
         HttpServletRequest requestToUse = request;
         String username = null;
+
+        if (!rateLimitEnabled) {
+            chain.doFilter(request, response);
+            return;
+        }
 
         // If JSON body on signup/login, read body bytes and create a replayable wrapper
         if ((path.equals("/signup") || path.equals("/login"))
@@ -64,7 +79,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                             ? request.getCharacterEncoding()
                             : StandardCharsets.UTF_8.name());
                     ObjectMapper mapper = new ObjectMapper();
-                    Map<String, Object> jsonMap = mapper.readValue(body, Map.class);
+                    Map<String, Object> jsonMap = mapper.readValue(
+                            body, new TypeReference<Map<String, Object>>() {
+                            });
                     Object e = jsonMap.get("email");
                     if (e != null)
                         username = e.toString();
@@ -118,7 +135,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
-        filterChain.doFilter(requestToUse, response);
+        chain.doFilter(requestToUse, response);
     }
 
     private boolean isRateLimited(Map<String, RateLimitCounter> store,
@@ -203,4 +220,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             return new BufferedReader(new InputStreamReader(getInputStream(), java.nio.charset.Charset.forName(enc)));
         }
     }
+
+    public void resetCounters() {
+        ipCounters.clear();
+        userCounters.clear();
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.rateLimitEnabled = enabled;
+    }
+
 }

@@ -1,7 +1,9 @@
-package com.tanit.cto.user_management;
+package com.tanit.cto.user_management.repository;
 
-import com.tanit.cto.user_management.User;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
+
+import com.tanit.cto.user_management.model.User;
+
 import java.util.Optional;
 
 // Managing User entities in Neo4j with a custom finder by email

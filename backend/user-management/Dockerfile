@@ -4,6 +4,14 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
+# Test stage
+FROM maven:3.9.10-eclipse-temurin-21 AS test
+WORKDIR /app
+COPY --from=deps /root/.m2 /root/.m2
+COPY . .
+CMD ["mvn", "test"]
+
+
 # Development build
 FROM maven:3.9.10-eclipse-temurin-21 AS dev
 WORKDIR /app
@@ -11,6 +19,7 @@ RUN apt-get update && apt-get install -y curl grep && rm -rf /var/lib/apt/lists/
 # copy cached dependencies
 COPY --from=deps /root/.m2 /root/.m2
 COPY . .
+
 # hot reload
 ENV SPRING_PROFILES_ACTIVE=dev
 RUN mvn compile  
