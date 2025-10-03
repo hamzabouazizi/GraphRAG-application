@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Set;
 
@@ -20,26 +21,22 @@ public class JwtUtil {
 
     // Generates a JWT token for the given email
     public String generateToken(String email, long customExpiration) {
-        return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + customExpiration))
-                .signWith(SignatureAlgorithm.HS512, secret)
-                .compact();
+        return generateToken(email, Set.of("USER"), customExpiration);
     }
 
     public String generateToken(String email, Set<String> roles, long customExpiration) {
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject(email)
-                .claim("roles", roles) // include roles in JWT
+                .claim("roles", roles)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + customExpiration))
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .signWith(SignatureAlgorithm.HS512, secret.getBytes(StandardCharsets.UTF_8))
                 .compact();
+        return token;
     }
 
     public String generateToken(String email) {
-        return generateToken(email, expiration); // use default 24h
+        return generateToken(email, Set.of("USER"), expiration); // use default 24h
     }
 
     // Extracts the email from the token
