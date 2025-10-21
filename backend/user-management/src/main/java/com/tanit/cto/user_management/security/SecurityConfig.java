@@ -48,6 +48,7 @@ public class SecurityConfig {
     // Define security filter chain rules
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtUtil jwtUtil) throws Exception {
+        System.out.println("SecurityConfig: building filter chain");
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -56,14 +57,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                                "/signup",
-                                "/login",
+                                "/api/signup",
+                                "/api/login",
+                                "/api/logout",
+                                "/api/verifyAndLogin",
+                                "/api/forgot-password",
+                                "/api/reset-password",
+                                "/actuator/**",
                                 "/health",
                                 "/actuator/health",
                                 "/actuator/health/**",
                                 "/actuator/prometheus")
                         .permitAll()
                         .anyRequest().authenticated())
+                .logout(logout -> logout.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
@@ -81,7 +88,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost", "http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of("https://localhost:3000", "http://localhost:3000"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

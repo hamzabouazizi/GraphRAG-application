@@ -6,7 +6,10 @@ import com.tanit.cto.user_management.model.User;
 
 import java.util.Optional;
 
-// Managing User entities in Neo4j with a custom finder by email
 public interface UserRepository extends Neo4jRepository<User, String> {
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByVerificationToken(String token);
+
+    Optional<User> findByResetToken(String token);
 }

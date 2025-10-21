@@ -1,0 +1,66 @@
+name: CI/CD Local Dev
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  run-containers:
+    runs-on: self-hosted
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      NEO4J_BOLT_INTERNAL: ${{ secrets.NEO4J_BOLT_INTERNAL }}
+      NEO4J_USERNAME: ${{ secrets.NEO4J_USERNAME }}
+      NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+      SPRING_DEVTOOLS_REMOTE_SECRET: ${{ secrets.SPRING_DEVTOOLS_REMOTE_SECRET }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      USER_MGMT_URL: ${{ secrets.USER_MGMT_URL }}
+      NEO4J_DATA_DIR: ${{ secrets.NEO4J_DATA_DIR }}
+      NEO4J_AUTH: ${{ secrets.NEO4J_AUTH }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: hamzabouazizi
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: build images with Docker Compose
+        run: docker compose -f docker-compose.dev.yml build
+
+      - name: Push images to GHCR
+        run: docker compose -f docker-compose.dev.yml push
+
+      - name: Start services
+        run: docker compose -f docker-compose.dev.yml up -d
+        continue-on-error: true
+
+      - name: Show all containers (including stopped)
+        run: docker ps -a --format "table {{.Names}}\t{{.Status}}"
+
+      - name: Inspect all container health
+        run: |
+          docker ps -a -q | ForEach-Object {
+            Write-Output "---- $_ ----"
+            docker inspect --format='{{.Name}} {{.State.Status}} {{json .State.Health}}' $_
+          }
+
+      - name: Logs for all containers
+        run: |
+          docker ps -a -q | ForEach-Object {
+            Write-Output "---- Logs for $_ ----"
+            docker logs --tail=100 $_
+          }
+      - name: Cleanup Docker
+        run: |
+          docker builder prune -f

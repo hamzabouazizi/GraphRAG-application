@@ -1,11 +1,10 @@
 package com.tanit.cto.user_management.model;
 
-// Request object for login and signup.
-
 public class AuthRequest {
     private String email;
     private String password;
     private String fullName;
+    private String gender;
 
     public AuthRequest() {
     }
@@ -15,10 +14,11 @@ public class AuthRequest {
         this.password = password;
     }
 
-    public AuthRequest(String email, String password, String fullName) {
+    public AuthRequest(String email, String password, String fullName, String gender) {
         this.email = email;
         this.password = password;
         this.fullName = fullName;
+        this.gender = gender;
     }
 
     public String getEmail() {
@@ -43,5 +43,13 @@ public class AuthRequest {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 }

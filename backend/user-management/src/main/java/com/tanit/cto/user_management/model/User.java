@@ -16,15 +16,24 @@ public class User {
 
     private String fullName;
 
+    private String gender;
+
     private Set<String> roles = new HashSet<>();
+
+    private boolean enabled = false;
+    private String verificationToken;
+    private Long verificationTokenExpiry;
+    private String resetToken;
+    private Long resetTokenExpiry;
 
     public User() {
     }
 
-    public User(String email, String password, String fullName) {
+    public User(String email, String password, String fullName, String gender) {
         this.email = email;
         this.password = password;
         this.fullName = fullName;
+        this.gender = gender;
     }
 
     public String getEmail() {
@@ -61,5 +70,53 @@ public class User {
 
     public void addRole(String role) {
         this.roles.add(role);
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
+    }
+
+    public Long getVerificationTokenExpiry() {
+        return verificationTokenExpiry;
+    }
+
+    public void setVerificationTokenExpiry(Long verificationTokenExpiry) {
+        this.verificationTokenExpiry = verificationTokenExpiry;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
+    public Long getResetTokenExpiry() {
+        return resetTokenExpiry;
+    }
+
+    public void setResetTokenExpiry(Long resetTokenExpiry) {
+        this.resetTokenExpiry = resetTokenExpiry;
     }
 }

@@ -3,6 +3,7 @@ src/test/resources/application-test.properties
 !src/main/resources/application-example.properties
 .mvn/wrapper/maven-wrapper.jar
 target/
+certs/
 !**/src/main/**/target/
 !**/src/test/**/target/
 build/

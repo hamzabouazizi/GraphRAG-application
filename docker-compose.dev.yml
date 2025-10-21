@@ -4,41 +4,52 @@ services:
       context: ./backend/user-management
       target: dev-runtime
     image: ghcr.io/hamzabouazizi/user-management:dev
+    container_name: user-management
     ports:
-      - "8080:8080"
+      - "8443:8443"
     environment:
       JWT_SECRET: ${JWT_SECRET}
       SPRING_NEO4J_URI: ${NEO4J_BOLT_INTERNAL}
       SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
       SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
       SPRING_DEVTOOLS_REMOTE_SECRET: ${SPRING_DEVTOOLS_REMOTE_SECRET}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      MAIL_SENDER: ${MAIL_SENDER}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT: 5000
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT: 5000
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT: 5000
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+AlwaysPreTouch"
+      JWT_COOKIE_SECURE: true
+      SERVER_PORT: ${SERVER_PORT}
+      SERVER_SSL_KEY_STORE: ${SERVER_SSL_KEY_STORE}
+      SERVER_SSL_KEY_STORE_PASSWORD: ${SERVER_SSL_KEY_STORE_PASSWORD}
+      SERVER_SSL_KEY_STORE_TYPE: ${SERVER_SSL_KEY_STORE_TYPE}
+      SERVER_SSL_KEY_ALIAS: ${SERVER_SSL_KEY_ALIAS}
+      SERVER_SSL_ENABLED: true
     volumes:
-      - ./backend/user-management/src:/app/src:rw
-      - ./backend/user-management/pom.xml:/app/pom.xml:rw
+      - ./backend/user-management:/app:rw
+    mem_limit: 768m
+    cpus: 0.5
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider --no-check-certificate https://localhost:8443/actuator/health || exit 1" ]
       interval: 10s
       retries: 30
       start_period: 180s
       timeout: 30s
+    restart: unless-stopped
     depends_on:
       neo4j:
         condition: service_healthy
-
-  user-management-test:
-    build:
-      context: ./backend/user-management
-      target: test
-    profiles: [ "test" ]
-    image: ghcr.io/hamzabouazizi/user-management:test
-    environment:
-      JWT_SECRET: ${JWT_SECRET}
-      SPRING_NEO4J_URI: ${NEO4J_BOLT_INTERNAL}
-      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
-      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
-      SPRING_DEVTOOLS_REMOTE_SECRET: ${SPRING_DEVTOOLS_REMOTE_SECRET}
-    depends_on:
-      neo4j:
+      redis:
         condition: service_healthy
 
   pdf-graphrag-service:
@@ -47,7 +58,8 @@ services:
       target: dev
     image: ghcr.io/hamzabouazizi/pdf-graphrag-service:dev
     volumes:
-      - ./backend/pdf-graphrag-service/src:/app/src
+      - ./backend/pdf-graphrag-service/app:/app
+      - ./backend/pdf-graphrag-service/.env:/app/.env
       - "${PDF_STORAGE_DIR}:/app/storage/pdfs"
     ports:
       - "8000:8000"
@@ -64,6 +76,7 @@ services:
       retries: 30
       start_period: 120s
       timeout: 30s
+    restart: unless-stopped
     depends_on:
       user-management:
         condition: service_healthy
@@ -91,6 +104,7 @@ services:
       retries: 30
       start_period: 120s
       timeout: 30s
+    restart: unless-stopped
     depends_on:
       - user-management
       - neo4j
@@ -101,33 +115,70 @@ services:
       dockerfile: graphrag-frontend/Dockerfile
       target: dev
     image: ghcr.io/hamzabouazizi/graphrag-frontend:dev
+    container_name: graphrag-frontend
     volumes:
-      - ./graphrag-frontend:/app:cached
-      - frontend_node_modules:/app/node_modules
+      - ./graphrag-frontend:/app
+      - ./graphrag-frontend/certs:/app/certs
+      - /app/node_modules
+    mem_limit: 1.5g
+    cpus: 0.5
     environment:
       - NODE_ENV=development
       - HOST=0.0.0.0
       - PORT=3000
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - SSL_CRT_FILE=${SSL_CRT_FILE}
+      - SSL_KEY_FILE=${SSL_KEY_FILE}
+      - WDS_SOCKET_PORT=${WDS_SOCKET_PORT}
+      - HTTPS=true
+    command: sh -c "npm install && npm start"
     ports:
       - "3000:3000"
 
   neo4j:
     image: neo4j:latest
+    container_name: neo4j
     environment:
-      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+      NEO4J_AUTH: ${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+      NEO4J_server_memory_heap_initial__size: 512M
+      NEO4J_server_memory_heap_max__size: 512M # heap for JVM
+      NEO4J_server_memory_pagecache_size: 512M # cached graph data
+      NEO4J_server_config_strict__validation_enabled: false
+      NEO4J_server_jvm_additional: "-XX:+UnlockExperimentalVMOptions --add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+DisableExplicitGC -XX:+AlwaysPreTouch"
     volumes:
       - "${NEO4J_DATA_DIR}:/data"
+      - "${NEO4J_DATA_DIR}/logs:/logs"
+      - "${NEO4J_DATA_DIR}/plugins:/plugins"
     ports:
       - "7474:7474"
       - "7687:7687"
+    mem_limit: 1.2g
+    cpus: 0.5
     healthcheck:
-      test: [ "CMD", "cypher-shell", "-u", "${NEO4J_USERNAME}", "-p", "${NEO4J_PASSWORD}", "RETURN 1;" ]
+      test: [ "CMD", "cypher-shell", "--non-interactive", "-u", "${NEO4J_USERNAME}", "-p", "${NEO4J_PASSWORD}", "RETURN 1;" ]
       interval: 10s
       timeout: 30s
       retries: 30
       start_period: 180s
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - "${REDIS_DATA_DIR}:/data"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.25
 
 volumes:
   frontend_node_modules:

@@ -17,34 +17,35 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    private final long expiration = 1000 * 60 * 60 * 24; // 24 hours
+    private final long expiration = 1000 * 60 * 60 * 24;
 
-    // Generates a JWT token for the given email
     public String generateToken(String email, long customExpiration) {
-        return generateToken(email, Set.of("USER"), customExpiration);
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + customExpiration))
+                .signWith(SignatureAlgorithm.HS512, secret.getBytes(StandardCharsets.UTF_8))
+                .compact();
     }
 
     public String generateToken(String email, Set<String> roles, long customExpiration) {
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setSubject(email)
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + customExpiration))
                 .signWith(SignatureAlgorithm.HS512, secret.getBytes(StandardCharsets.UTF_8))
                 .compact();
-        return token;
     }
 
     public String generateToken(String email) {
-        return generateToken(email, Set.of("USER"), expiration); // use default 24h
+        return generateToken(email, expiration);
     }
 
-    // Extracts the email from the token
     public String extractEmail(String token) {
         return getClaims(token).getSubject();
     }
 
-    // Checks if the token is valid
     public boolean validateToken(String token) {
         try {
             Claims claims = getClaims(token);
@@ -54,10 +55,9 @@ public class JwtUtil {
         }
     }
 
-    // Extracts claims from the token
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(secret)
+                .setSigningKey(secret.getBytes(StandardCharsets.UTF_8))
                 .parseClaimsJws(token)
                 .getBody();
     }
