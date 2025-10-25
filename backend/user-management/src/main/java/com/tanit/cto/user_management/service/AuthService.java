@@ -53,7 +53,13 @@ public class AuthService {
         if (!user.isEnabled()) {
             throw new RuntimeException("User email is not verified yet.");
         }
-        String jwtToken = jwtUtil.generateToken(user.getEmail(), user.getRoles(), 24 * 60 * 60 * 1000);
+        String jwtToken = jwtUtil.generateToken(
+                user.getEmail(),
+                user.getRoles(),
+                user.getFullName(),
+                user.getGender(),
+                24 * 60 * 60 * 1000);
+
         return jwtToken;
     }
 

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -56,6 +57,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String clientIp = request.getRemoteAddr();
 
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            clientIp = forwarded.split(",")[0].trim();
+        }
+
         HttpServletRequest requestToUse = request;
         String username = null;
 
@@ -65,7 +71,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
 
         // If JSON body on signup/login, read body bytes and create a replayable wrapper
-        if ((path.equals("/signup") || path.equals("/login"))
+        if ((path.equals("/api/signup") || path.equals("/api/login"))
                 && request.getContentType() != null
                 && request.getContentType().toLowerCase().contains("application/json")) {
 
@@ -97,9 +103,26 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         // If still null, try JWT extraction
         if (username == null) {
+            String token = null;
+
+            // Authorization header
             String authHeader = requestToUse.getHeader("Authorization");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
+                token = authHeader.substring(7);
+            }
+
+            // JWT cookie
+            if (token == null && requestToUse.getCookies() != null) {
+                for (Cookie cookie : requestToUse.getCookies()) {
+                    if ("jwt".equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+
+            // Extract username from token
+            if (token != null) {
                 try {
                     username = jwtUtil.extractEmail(token);
                 } catch (Exception ignored) {
@@ -114,7 +137,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
 
         // 2. Signup limit (per IP 5/hour)
-        if (path.equals("/signup")) {
+        if (path.equals("/api/signup")) {
             if (isRateLimited(ipCounters, "signup:" + clientIp, 5, 3600)) {
                 block(response, "Too many signups from this IP (limit 5/hour)");
                 return;
@@ -122,7 +145,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
 
         // 3. Login limits
-        else if (path.equals("/login")) {
+        else if (path.equals("/api/login")) {
             if (username != null) {
                 if (isRateLimited(userCounters, "login:user:" + username, 5, 60)) {
                     block(response, "Too many login attempts for this user (limit 5/minute)");

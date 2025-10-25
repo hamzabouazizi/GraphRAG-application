@@ -42,6 +42,19 @@ public class JwtUtil {
         return generateToken(email, expiration);
     }
 
+    public String generateToken(String email, Set<String> roles, String fullName, String gender,
+            long customExpiration) {
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("roles", roles)
+                .claim("fullName", fullName)
+                .claim("gender", gender)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + customExpiration))
+                .signWith(SignatureAlgorithm.HS512, secret.getBytes(StandardCharsets.UTF_8))
+                .compact();
+    }
+
     public String extractEmail(String token) {
         return getClaims(token).getSubject();
     }

@@ -141,7 +141,12 @@ public class UserController {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, clearOldJwt.toString());
 
-        String jwtToken = jwtUtil.generateToken(user.getEmail(), user.getRoles(), 24 * 60 * 60 * 1000);
+        String jwtToken = jwtUtil.generateToken(
+                user.getEmail(),
+                user.getRoles(),
+                user.getFullName(),
+                user.getGender(),
+                24 * 60 * 60 * 1000);
         ResponseCookie cookie = ResponseCookie.from("jwt", jwtToken)
                 .httpOnly(true)
                 .secure(true)
@@ -171,7 +176,10 @@ public class UserController {
     }
 
     @PostMapping("/api/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
+    public ResponseEntity<?> logout(HttpServletResponse response, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
+        }
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
                 .secure(true)

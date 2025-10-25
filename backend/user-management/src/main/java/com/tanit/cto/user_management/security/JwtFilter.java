@@ -14,12 +14,25 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/api/login",
+            "/api/signup",
+            "/api/verifyAndLogin",
+            "/api/forgot-password",
+            "/api/reset-password",
+            "/actuator",
+            "/health",
+            "/actuator/health",
+            "/actuator/prometheus",
+            "/actuator/info");
 
     public JwtFilter(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService) {
         this.jwtUtil = jwtUtil;
@@ -31,21 +44,12 @@ public class JwtFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain chain)
             throws ServletException, IOException {
-        System.out.println("JwtFilter intercepted: " + request.getServletPath());
 
         String path = request.getRequestURI();
-        System.out.println("JwtFilter intercepted: " + path);
 
-        if (path.equals("/api/signup") ||
-                path.equals("/api/login") ||
-                path.equals("/api/logout") ||
-                path.equals("/api/verifyAndLogin") ||
-                path.equals("/api/forgot-password") ||
-                path.equals("/api/reset-password") ||
-                path.startsWith("/actuator") ||
-                path.contains("/health")) {
-
-            System.out.println(">>> JwtFilter skipping JWT for public path: " + path);
+        // Skip filtering for public endpoints
+        if (isPublicPath(path)) {
+            System.out.println("JwtFilter SKIPPED for public path: " + path);
             chain.doFilter(request, response);
             return;
         }
@@ -89,5 +93,9 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private boolean isPublicPath(String path) {
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
 }
