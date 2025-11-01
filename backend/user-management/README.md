@@ -1,6 +1,6 @@
-### User Management Service
+## User Management Service
 
-## Secure Authentication & Authorization with Neo4j and Spring Boot
+### Secure Authentication & Authorization with Neo4j and Spring Boot
 
 ## Overview
 This project is a Java 21/Spring Boot 3.5.3–based User Management microservice designed to provide a secure, scalable, and production-ready authentication layer for modern applications. It handles the entire user lifecycle, from signup and email verification to login, profile management, and password recovery. While maintaining strong security guarantees and robust persistence. Built with Spring Data Neo4j as the graph database backend, this service leverages Redis caching for efficient temporary data storage (pending verification tokens), and enforces strict rate-limiting, JWT-based stateless authentication, and HTTPS protection.
@@ -22,19 +22,19 @@ Follows modern Spring conventions with clear separation of concerns across layer
 
 ## Security Architecture
 Security is a first-class concern in this application. The following mechanisms are in place to protect both users and infrastructure:
-# JWT-Based Authentication: 
+### JWT-Based Authentication: 
 Upon successful login, the server issues a **JWT** token stored in a **HttpOnly cookie**, making it inaccessible to client-side scripts and therefore resilient against XSS attacks.
-# Environment Variables
+### Environment Variables
 All environment variables are injected dynamically at runtime.
-# HTTPS Enforcement
+### HTTPS Enforcement
 The application is served exclusively via **HTTPS**, backed by a self-signed TLS certificate (.p12) generated using mkcert.
-# Rate Limiting
+### Rate Limiting
 Rate limiting is enforced globally and per endpoint to mitigate brute-force and abuse attempts.
-# One-Time Verification Tokens
+### One-Time Verification Tokens
 User verification tokens are consumed once and immediately invalidated after use.
-# Secure Logout
+### Secure Logout
 Logout endpoint are protected by JWT verification and ensure that only authenticated users can terminate active sessions.
-# Redis Caching for Pending Users
+### Redis Caching for Pending Users
 Newly registered (unverified) users are temporarily stored in **Redis** to reduce database load and ensure fast access. Upon successful email verification, their data is migrated to the persistent Neo4j store.
 
 ## Database Integration
@@ -56,6 +56,7 @@ Continuous Integration is configured to:
 - Build the application image
 - Execute test suites
 - Push validated images to the container registry (GitHub Container Registry)
+
 Continuous Deployment is handled through a **GitOps workflow** managed by **ArgoCD**.
 
 ## API Endpoints
