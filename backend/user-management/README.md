@@ -38,7 +38,7 @@ Logout endpoint are protected by JWT verification and ensure that only authentic
 Newly registered (unverified) users are temporarily stored in **Redis** to reduce database load and ensure fast access. Upon successful email verification, their data is migrated to the persistent Neo4j store.
 
 ## Database Integration
-The service communicates with **Neo4j** through **Neo4jClient** and the native **Neo4j Java Driver**, providing flexibility for complex graph queries and relationships between users. Local development uses the official Neo4j Docker image (hub.docker.com/_/neo4j), configured via Docker Compose.
+The service communicates with **Neo4j** through **Neo4jClient** and the native **Neo4j Java Driver**, providing flexibility for complex graph queries and relationships between users. Local development uses the official Neo4j Docker image (hub.docker.com/_/neo4j).
 
 ## Email Verification
 User verification and password reset flows rely on **Brevo’s SMTP** email service.
